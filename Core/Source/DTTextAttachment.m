@@ -13,6 +13,8 @@
 {
 	CGSize _originalSize;
 	CGSize _displaySize;
+	CGSize _maximumSize;
+	
 	DTTextAttachmentVerticalAlignment _verticalAlignment;
 	id contents;
     NSDictionary *_attributes;
@@ -78,7 +80,6 @@
 	
 	NSURL *contentURL = nil;
 	DTImage *decodedImage = nil;
-	
 	
 	// decode content URL
 	if (src != nil) { // guard against img with no src
@@ -172,7 +173,6 @@
 		}
 	}
 
-	
 	// if you have no display size we assume original size
 	if (CGSizeEqualToSize(displaySize, CGSizeZero))
 	{
@@ -180,28 +180,15 @@
 	}
 	
 	// adjust the display size if there is a restriction and it's too large
-	CGSize adjustedSize = displaySize;
-	
-	if (maxImageSize.width>0 && maxImageSize.height>0)
-	{
-		if (maxImageSize.width < displaySize.width || maxImageSize.height < displaySize.height)
-		{
-			adjustedSize = sizeThatFitsKeepingAspectRatio2(displaySize, maxImageSize);
-		}
-		
-		// still no display size? use max size
-		if (CGSizeEqualToSize(displaySize, CGSizeZero))
-		{
-			adjustedSize = maxImageSize;
-		}
-	}
-		
 	attachment.contentType = attachmentType;
 	attachment.contentURL = contentURL;
 	attachment.contents = decodedImage;
+	attachment.maximumSize = maxImageSize;
 	attachment.originalSize = originalSize;
-	attachment.displaySize = adjustedSize;
+	attachment.displaySize = displaySize;
 	attachment.attributes = element.attributes;
+	
+	[attachment adjustDisplaySizeToFit];
 	
 	return attachment;
 }
@@ -220,6 +207,26 @@
 	NSString *encoded = [data base64EncodedString];
 	
 	return [@"data:image/png;base64," stringByAppendingString:encoded];
+}
+
+- (void)adjustDisplaySizeToFit{
+	CGSize maxImageSize = self.maximumSize;
+	CGSize displaySize = self.displaySize;
+	
+	if (maxImageSize.width>0 && maxImageSize.height>0){
+		if (maxImageSize.width < displaySize.width || maxImageSize.height < displaySize.height)
+		{
+			displaySize = sizeThatFitsKeepingAspectRatio2(displaySize, maxImageSize);
+		}
+		
+		// still no display size? use max size
+		if (CGSizeEqualToSize(displaySize, CGSizeZero))
+		{
+			displaySize = maxImageSize;
+		}
+	}
+	
+	self.displaySize = displaySize;
 }
 
 - (void)adjustVerticalAlignmentForFont:(CTFontRef)font
@@ -286,6 +293,8 @@
 {
 	_originalSize = originalSize;
 	self.displaySize = _originalSize;
+	
+	[self adjustDisplaySizeToFit];
 }
 
 /** 
@@ -309,6 +318,7 @@
 
 @synthesize originalSize = _originalSize;
 @synthesize displaySize = _displaySize;
+@synthesize maximumSize = _maximumSize;
 @synthesize contents;
 @synthesize contentType;
 @synthesize contentURL = _contentURL;

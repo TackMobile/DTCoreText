@@ -38,6 +38,7 @@ typedef enum
 
 @property (nonatomic, assign) CGSize originalSize;
 @property (nonatomic, assign) CGSize displaySize;
+@property (nonatomic, assign) CGSize maximumSize;
 @property (nonatomic, strong) id contents;
 @property (nonatomic, assign) DTTextAttachmentType contentType;
 @property (nonatomic, strong) NSURL *contentURL;
@@ -62,7 +63,7 @@ typedef enum
  */
 - (NSString *)dataURLRepresentation;
 
-
+- (void)adjustDisplaySizeToFit;
 - (void)adjustVerticalAlignmentForFont:(CTFontRef)font;
 
 
