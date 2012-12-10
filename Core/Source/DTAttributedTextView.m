@@ -237,6 +237,10 @@
 	return contentView.delegate;
 }
 
+- (NSString *) accessibilityLabel{
+	return self.attributedString.string;
+}
+
 @synthesize attributedString;
 @synthesize contentView;
 @synthesize textDelegate;
