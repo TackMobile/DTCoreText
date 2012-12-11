@@ -332,6 +332,8 @@ static Class _layerClassToUseForDTAttributedTextContentView = nil;
 						{
 							UIView *newCustomLinkView = nil;
 							
+							NSAttributedString *linkString = [layoutString attributedSubstringFromRange:runRange];
+							
 							if (_delegateFlags.delegateSupportsCustomViewsForLinks)
 							{
 								NSDictionary *attributes = [layoutString attributesAtIndex:runRange.location effectiveRange:NULL];
@@ -341,13 +343,14 @@ static Class _layerClassToUseForDTAttributedTextContentView = nil;
 							}
 							else if (_delegateFlags.delegateSupportsGenericCustomViews)
 							{
-								NSAttributedString *string = [layoutString attributedSubstringFromRange:runRange]; 
-								newCustomLinkView = [_delegate attributedTextContentView:self viewForAttributedString:string frame:frameForSubview];
+								newCustomLinkView = [_delegate attributedTextContentView:self viewForAttributedString:linkString frame:frameForSubview];
 							}
 							
 							// delegate responsible to set frame
 							if (newCustomLinkView)
 							{
+								newCustomLinkView.accessibilityLabel = linkString.string;
+								newCustomLinkView.accessibilityTraits = UIAccessibilityTraitLink;
 								newCustomLinkView.tag = runRange.location;
 								[self addSubview:newCustomLinkView];
 								
@@ -799,6 +802,10 @@ static Class _layerClassToUseForDTAttributedTextContentView = nil;
 	}
 	
 	return selfLock;
+}
+
+- (NSString*)accessibilityLabel{
+	return self.attributedString.string;
 }
 
 

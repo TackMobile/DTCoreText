@@ -130,6 +130,10 @@
 	}
 }
 
+- (NSString*)accessibilityLabel{
+	return _attributedString.string;
+}
+
 @synthesize attributedString = _attributedString;
 @synthesize attributedTextContextView = _attributedTextContextView;
 
