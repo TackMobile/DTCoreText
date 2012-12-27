@@ -257,7 +257,6 @@
 		UIAccessibilityElement *containerElement = [[UIAccessibilityElement alloc] initWithAccessibilityContainer:self];
 		containerElement.accessibilityLabel = [self accessibilityLabel];
 		containerElement.accessibilityFrame = [self convertRect:self.bounds toView:nil];
-		[accessibleElements addObject:containerElement];
 		
 		for (NSString *key in contentView.customViewsForLinksIndex) {
 			UIView *linkView = [contentView.customViewsForLinksIndex objectForKey:key];
@@ -267,6 +266,8 @@
 			linkElement.accessibilityTraits = linkView.accessibilityTraits;
 			[accessibleElements addObject:linkElement];
 		}
+		//Add the container element after so all links are tappable.
+		[accessibleElements addObject:containerElement];
 	}	
 	
 	return accessibleElements;
