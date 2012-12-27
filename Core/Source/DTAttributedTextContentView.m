@@ -48,9 +48,6 @@
 	__unsafe_unretained id <DTAttributedTextContentViewDelegate> _delegate;
 }
 
-@property (nonatomic, strong) NSMutableDictionary *customViewsForLinksIndex;
-@property (nonatomic, strong) NSMutableDictionary *customViewsForAttachmentsIndex;
-
 - (void)removeAllCustomViews;
 - (void)removeSubviewsOutsideRect:(CGRect)rect;
 - (void)removeAllCustomViewsForLinks;

@@ -134,6 +134,8 @@
 
 @property (nonatomic, assign) dispatch_semaphore_t selfLock;
 
+@property (nonatomic, strong) NSMutableDictionary *customViewsForLinksIndex;
+@property (nonatomic, strong) NSMutableDictionary *customViewsForAttachmentsIndex;
 
 @end
 

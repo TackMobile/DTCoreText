@@ -35,6 +35,7 @@
 {
 	contentView.delegate = nil;
 	[contentView removeObserver:self forKeyPath:@"frame"];
+	[[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
 - (void)layoutSubviews
@@ -77,6 +78,8 @@
 	
 	self.autoresizesSubviews = YES;
 	self.clipsToBounds = YES;
+	
+	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(rotationDetected) name:UIDeviceOrientationDidChangeNotification object:nil];
 }
 
 // override class e.g. for mutable content view
@@ -239,6 +242,62 @@
 
 - (NSString *) accessibilityLabel{
 	return self.attributedString.string;
+}
+
+- (BOOL)isAccessibilityElement
+{
+	return NO;
+}
+
+- (NSArray *)getAccessibleElements
+{
+	if (!accessibleElements)
+	{
+		accessibleElements = [NSMutableArray new];
+		UIAccessibilityElement *containerElement = [[UIAccessibilityElement alloc] initWithAccessibilityContainer:self];
+		containerElement.accessibilityLabel = [self accessibilityLabel];
+		containerElement.accessibilityFrame = [self convertRect:self.bounds toView:nil];
+		[accessibleElements addObject:containerElement];
+		
+		for (NSString *key in contentView.customViewsForLinksIndex) {
+			UIView *linkView = [contentView.customViewsForLinksIndex objectForKey:key];
+			UIAccessibilityElement *linkElement = [[UIAccessibilityElement alloc] initWithAccessibilityContainer:self];
+			linkElement.accessibilityFrame = [self convertRect:linkView.frame toView:nil];
+			linkElement.accessibilityLabel = linkView.accessibilityLabel;
+			linkElement.accessibilityTraits = linkView.accessibilityTraits;
+			[accessibleElements addObject:linkElement];
+		}
+	}	
+	
+	return accessibleElements;
+}
+
+//UIAccessibilityContainer protocol methods.
+- (NSInteger)accessibilityElementCount
+{
+	return [[self getAccessibleElements] count];
+}
+
+- (id)accessibilityElementAtIndex:(NSInteger)index
+{
+	return [[self getAccessibleElements] objectAtIndex:index];
+}
+
+- (NSInteger)indexOfAccessibilityElement:(id)element
+{
+	return [[self getAccessibleElements] indexOfObject:element];
+}
+
+- (void)rotationDetected {
+	//element frames have changed
+	accessibleElements = nil;
+}
+
+- (void)setContentOffset:(CGPoint)contentOffset {
+	[super setContentOffset:contentOffset];
+	
+	//on scroll, make new visible links accessible
+	accessibleElements = nil;
 }
 
 @synthesize attributedString;

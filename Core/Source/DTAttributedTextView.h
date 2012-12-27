@@ -14,6 +14,7 @@
 {
 	DTAttributedTextContentView *contentView;
 	UIView *backgroundView;
+	NSMutableArray *accessibleElements;
 }
 
 @property (nonatomic, strong) NSAttributedString *attributedString;
