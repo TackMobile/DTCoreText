@@ -20,7 +20,6 @@
 
 @interface DTAttributedTextContentView ()
 {
-	BOOL _drawDebugFrames;
 	BOOL _shouldDrawImages;
 	BOOL _shouldDrawLinks;
 	BOOL _shouldLayoutCustomSubviews;
@@ -488,8 +487,9 @@ static Class _layerClassToUseForDTAttributedTextContentView = nil;
 
 - (void)relayoutText
 {
-    // Make sure we actually have a superview before attempting to relayout the text.
-    if (self.superview) {
+    // Make sure we actually have a superview and a previous layout before attempting to relayout the text.
+    if (_layoutFrame && self.superview)
+	{
         // need new layouter
         self.layouter = nil;
         self.layoutFrame = nil;
@@ -815,7 +815,6 @@ static Class _layerClassToUseForDTAttributedTextContentView = nil;
 @synthesize attributedString = _attributedString;
 @synthesize delegate = _delegate;
 @synthesize edgeInsets = _edgeInsets;
-@synthesize drawDebugFrames = _drawDebugFrames;
 @synthesize shouldDrawImages = _shouldDrawImages;
 @synthesize shouldDrawLinks = _shouldDrawLinks;
 @synthesize shouldLayoutCustomSubviews = _shouldLayoutCustomSubviews;
