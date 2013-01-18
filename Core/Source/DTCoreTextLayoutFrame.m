@@ -1522,6 +1522,11 @@ static BOOL _DTCoreTextLayoutFramesShouldDrawDebugFrames = NO;
 	_DTCoreTextLayoutFramesShouldDrawDebugFrames = debugFrames;
 }
 
++ (BOOL)shouldDrawDebugFrames
+{
+	return _DTCoreTextLayoutFramesShouldDrawDebugFrames;
+}
+
 #pragma mark Corrections
 - (void)_correctAttachmentHeights
 {
