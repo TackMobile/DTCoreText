@@ -596,28 +596,13 @@ static Class _layerClassToUseForDTAttributedTextContentView = nil;
 	{
 		return;	
 	}
-
+	
+	BOOL frameSizeDidChange = !CGSizeEqualToSize(oldFrame.size, frame.size);
+	
 	// having a layouter means we are responsible for layouting yourselves
-	// relayout only if frame size has been changed
-	if (!CGSizeEqualToSize(oldFrame.size, frame.size))
+	if (frameSizeDidChange)
 	{
 		[self relayoutText];
-	}
-}
-
-//- (void)setFrame:(CGRect)frame
-//{
-//	// sizeToFit also calls this, but we want to be able to avoid relayouting
-//	[self setFrame:frame relayoutText:_relayoutTextOnFrameChange];
-//}
-
-- (void)setDrawDebugFrames:(BOOL)drawDebugFrames
-{
-	if (_drawDebugFrames != drawDebugFrames)
-	{
-		_drawDebugFrames = drawDebugFrames;
-		
-		[self setNeedsDisplay];
 	}
 }
 
