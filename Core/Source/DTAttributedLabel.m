@@ -22,6 +22,7 @@
     layoutFrame.numberOfLines = self.numberOfLines;
     layoutFrame.lineBreakMode = self.lineBreakMode;
     layoutFrame.truncationString = self.truncationString;
+	layoutFrame.noLeadingOnFirstLine = YES;
 	return layoutFrame;
 }
 
@@ -51,5 +52,15 @@
         [self relayoutText];
     }
 }
+
+- (void)sizeToFit
+{
+	CGSize size = [self suggestedFrameSizeToFitEntireStringConstraintedToWidth:CGFLOAT_OPEN_HEIGHT];
+	self.frame = CGRectMake(self.frame.origin.x, self.frame.origin.y, size.width, size.height);
+}
+
+@synthesize numberOfLines = _numberOfLines;
+@synthesize lineBreakMode = _lineBreakMode;
+@synthesize truncationString = _truncationString;
 
 @end
