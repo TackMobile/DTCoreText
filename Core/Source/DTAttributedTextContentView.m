@@ -89,7 +89,6 @@ static Class _layerClassToUseForDTAttributedTextContentView = nil;
 	_shouldDrawLinks = YES;
 	
 	_flexibleHeight = YES;
-
 	_relayoutMask = DTAttributedTextContentViewRelayoutOnWidthChanged;
 	
 	// possibly already set in NIB
@@ -600,6 +599,7 @@ static Class _layerClassToUseForDTAttributedTextContentView = nil;
 	// having a layouter means we are responsible for layouting yourselves
 
 	// relayout based on relayoutMask
+	
 	BOOL shouldRelayout = NO;
 
 	if (_relayoutMask & DTAttributedTextContentViewRelayoutOnHeightChanged)

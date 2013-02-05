@@ -26,6 +26,20 @@
 	return layoutFrame;
 }
 
+- (id)initWithFrame:(CGRect)frame
+{
+	self = [super initWithFrame:frame];
+	
+	if (self)
+	{
+		// we want to relayout the text if height or width change
+		self.relayoutMask = DTAttributedTextContentViewRelayoutOnHeightChanged | DTAttributedTextContentViewRelayoutOnWidthChanged;
+	}
+	
+	return self;
+}
+
+#pragma mark - Properties 
 
 - (void)setNumberOfLines:(int)numLines
 {
