@@ -19,6 +19,7 @@
 	BOOL _shouldDrawImages;
 	BOOL _shouldDrawLinks;
 	BOOL _shouldLayoutCustomSubviews;
+	DTAttributedTextContentViewRelayoutMask _relayoutMask;
 	
 	NSMutableSet *customViews;
 	NSMutableDictionary *customViewsForLinksIndex;
@@ -89,6 +90,8 @@ static Class _layerClassToUseForDTAttributedTextContentView = nil;
 	
 	_flexibleHeight = YES;
 
+	_relayoutMask = DTAttributedTextContentViewRelayoutOnWidthChanged;
+	
 	// possibly already set in NIB
 	if (!self.backgroundColor)
 	{
@@ -595,7 +598,27 @@ static Class _layerClassToUseForDTAttributedTextContentView = nil;
 	BOOL frameSizeDidChange = !CGSizeEqualToSize(oldFrame.size, frame.size);
 	
 	// having a layouter means we are responsible for layouting yourselves
-	if (frameSizeDidChange)
+
+	// relayout based on relayoutMask
+	BOOL shouldRelayout = NO;
+
+	if (_relayoutMask & DTAttributedTextContentViewRelayoutOnHeightChanged)
+	{
+		if (oldFrame.size.height != frame.size.height)
+		{
+			shouldRelayout = YES;
+		}
+	}
+
+	if (_relayoutMask & DTAttributedTextContentViewRelayoutOnWidthChanged)
+	{
+		if (oldFrame.size.width != frame.size.width)
+		{
+			shouldRelayout = YES;
+		}
+	}
+	
+	if (shouldRelayout)
 	{
 		[self relayoutText];
 	}
@@ -806,6 +829,6 @@ static Class _layerClassToUseForDTAttributedTextContentView = nil;
 @synthesize customViewsForLinksIndex;
 @synthesize customViewsForAttachmentsIndex;
 @synthesize layoutQueue = _layoutQueue;
-
+@synthesize relayoutMask = _relayoutMask;
 
 @end
