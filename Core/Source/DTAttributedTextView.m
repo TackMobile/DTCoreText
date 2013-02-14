@@ -26,7 +26,9 @@
 	// these are pass-through, i.e. store until the content view is created
 	__unsafe_unretained id textDelegate;
 	NSAttributedString *_attributedString;
+	
 	BOOL _shouldDrawLinks;
+	BOOL _shouldDrawImages;
 }
 
 - (id)initWithFrame:(CGRect)frame
@@ -86,6 +88,10 @@
 	self.clipsToBounds = YES;
 	
 	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(rotationDetected) name:UIDeviceOrientationDidChangeNotification object:nil];
+
+	// defaults
+	_shouldDrawLinks = YES;
+	_shouldDrawImages = YES;
 }
 
 // override class e.g. for mutable content view
@@ -307,7 +313,13 @@
 - (void)setShouldDrawLinks:(BOOL)shouldDrawLinks
 {
 	_shouldDrawLinks = shouldDrawLinks;
-	_attributedTextContentView.shouldDrawLinks = YES;
+	_attributedTextContentView.shouldDrawLinks = _shouldDrawLinks;
+}
+
+- (void)setShouldDrawImages:(BOOL)shouldDrawImages
+{
+	_shouldDrawImages = shouldDrawImages;
+	_attributedTextContentView.shouldDrawImages = _shouldDrawImages;
 }
 
 - (NSString *) accessibilityLabel{
