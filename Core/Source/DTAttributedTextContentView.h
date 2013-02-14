@@ -194,6 +194,8 @@ typedef NSUInteger DTAttributedTextContentViewRelayoutMask;
  @name Working with Custom Subviews
  */
 
+@property (nonatomic, strong) NSMutableDictionary *customViewsForLinksIndex;
+
 /**
  Removes all custom subviews (excluding views representing links) from the receiver.
  */

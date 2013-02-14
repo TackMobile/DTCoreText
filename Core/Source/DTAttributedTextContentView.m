@@ -47,7 +47,6 @@ NSString * const DTAttributedTextContentViewDidFinishLayoutNotification = @"DTAt
 	__unsafe_unretained id <DTAttributedTextContentViewDelegate> _delegate;
 }
 
-@property (nonatomic, strong) NSMutableDictionary *customViewsForLinksIndex;
 @property (nonatomic, strong) NSMutableDictionary *customViewsForAttachmentsIndex;
 @property (nonatomic, strong) NSMutableSet *customViews;
 
