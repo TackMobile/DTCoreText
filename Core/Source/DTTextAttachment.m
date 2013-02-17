@@ -8,6 +8,7 @@
 
 #import "DTTextAttachment.h"
 #import "DTCoreText.h"
+#import "DTUtils.h"
 
 #import "NSData+Base64.h"
 
@@ -258,7 +259,7 @@ static NSCache *imageCache = nil;
 	if (maxImageSize.width>0 && maxImageSize.height>0){
 		if (maxImageSize.width < displaySize.width || maxImageSize.height < displaySize.height)
 		{
-			displaySize = sizeThatFitsKeepingAspectRatio2(displaySize, maxImageSize);
+			displaySize = sizeThatFitsKeepingAspectRatio(displaySize, maxImageSize);
 		}
 		
 		// still no display size? use max size
