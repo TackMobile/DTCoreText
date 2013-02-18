@@ -1,10 +1,12 @@
 Pod::Spec.new do |spec|
   spec.name         = 'DTCoreText'
-  spec.version      = '1.0.2'
-  spec.platform     = :ios
+  spec.version      = '1.1.0'
+  spec.platform     = :ios, '5.0'
   spec.license      = 'BSD'
-  spec.source       = { :git => 'https://github.com/Cocoanetics/DTCoreText.git', :tag => '1.0.2' }
+  spec.source       = { :git => 'https://github.com/Cocoanetics/DTCoreText.git', :tag => spec.version.to_s }
   spec.source_files = 'Core/Source/*.{h,m,c}'
+  spec.dependency 'DTFoundation/Core', '~>1.0'
+  spec.dependency 'DTFoundation/DTHMLParser', '~>1.0'
   spec.frameworks   = 'MediaPlayer', 'QuartzCore', 'CoreText', 'CoreGraphics', 'ImageIO'
   spec.requires_arc = true
   spec.homepage     = 'https://github.com/Cocoanetics/DTCoreText'
@@ -12,11 +14,9 @@ Pod::Spec.new do |spec|
   spec.author       = { 'Oliver Drobnik' => 'oliver@drobnik.com' }
   spec.library      = 'xml2'
   spec.xcconfig     = { 'HEADER_SEARCH_PATHS' => '"$(SDKROOT)/usr/include/libxml2"' }
+  spec.prefix_header_contents = '#import <CoreText/CoreText.h>'
+  spec.resources = 'DTCoreTextFontOverrides.plist'
   def spec.post_install(target)
-    prefix_header = config.project_pods_root + target.prefix_header_filename
-    prefix_header.open('a') do |file|
-      file.puts(%{#ifdef __OBJC__\n#import <CoreText/CoreText.h>\n#endif\n#define ALLOW_IPHONE_SPECIAL_CASES 1})
-    end
     Dir.chdir(config.project_pods_root + 'DTCoreText/Core/Source/') do
       Dir.glob('*.css') do |css_file|
         system '/usr/bin/xxd', '-i', css_file, css_file + '.c'

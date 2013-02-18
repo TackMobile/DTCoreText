@@ -8,11 +8,12 @@
 
 #import "DTCoreText.h"
 #import "DTHTMLAttributedStringBuilder.h"
-#import "DTFoundation.h"
 
 #import "DTHTMLElementText.h"
 #import "DTHTMLElementBR.h"
 #import "DTHTMLElementStylesheet.h"
+
+#import "DTVersion.h"
 
 @interface DTHTMLAttributedStringBuilder ()
 
@@ -551,10 +552,15 @@
 	dispatch_group_async(_stringAssemblyGroup, _stringAssemblyQueue, ^{
 		DTHTMLElement *newNode = [DTHTMLElement elementWithName:elementName attributes:attributeDict options:_options];
 		
+		DTHTMLElement *previousLastChild = nil;
+		
 		if (_currentTag)
 		{
 			// inherit stuff
 			[newNode inheritAttributesFromElement:_currentTag];
+			[newNode interpretAttributes];
+
+			previousLastChild = [_currentTag.childNodes lastObject];
 			
 			// add as new child of current node
 			[_currentTag addChildNode:newNode];
@@ -573,6 +579,7 @@
 				_rootNode = newNode;
 				
 				[_rootNode inheritAttributesFromElement:_defaultTag];
+				[_rootNode interpretAttributes];
 			}
 		}
 		
@@ -581,6 +588,21 @@
 		if (mergedStyles)
 		{
 			[newNode applyStyleDictionary:mergedStyles];
+		}
+
+		// adding a block element eliminates previous trailing white space text node
+		// because a new block starts on a new line
+		if (previousLastChild && newNode.displayStyle != DTHTMLElementDisplayStyleInline)
+		{
+			if ([previousLastChild isKindOfClass:[DTHTMLElementText class]])
+			{
+				DTHTMLElementText *textElement = (DTHTMLElementText *)previousLastChild;
+				
+				if ([[textElement text] isIgnorableWhitespace])
+				{
+					[_currentTag removeChildNode:textElement];
+				}
+			}
 		}
 		
 		_currentTag = newNode;
@@ -601,7 +623,7 @@
 		// output the element if it is direct descendant of body tag, or close of body in case there are direct text nodes
 		
 		// find block to execute for this tag if any
-		void (^tagBlock)(void) = [_tagStartHandlers objectForKey:elementName];
+		void (^tagBlock)(void) = [_tagEndHandlers objectForKey:elementName];
 		
 		if (tagBlock)
 		{
@@ -665,10 +687,10 @@
 	dispatch_group_async(_stringAssemblyGroup, _stringAssemblyQueue, ^{
 		NSAssert(_currentTag, @"Cannot add text node without a current node");
 		
-		if ([string isWhitespace])
+		if ([string isIgnorableWhitespace])
 		{
-			// ignore whitespace as first element
-			if (![_currentTag.childNodes count])
+			// ignore whitespace as first element of block element
+			if (_currentTag.displayStyle!=DTHTMLElementDisplayStyleInline && ![_currentTag.childNodes count])
 			{
 				return;
 			}
@@ -693,6 +715,7 @@
 		textNode.text = string;
 		
 		[textNode inheritAttributesFromElement:_currentTag];
+		[textNode interpretAttributes];
 		
 		// text directly contained in body needs to be output right away
 		if (_currentTag == _bodyElement)
