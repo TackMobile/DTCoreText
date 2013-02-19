@@ -17,7 +17,7 @@
 
 - (DTCoreTextLayoutFrame *)layoutFrame
 {
-    _flexibleHeight = NO;
+    self.layoutFrameHeightIsConstrainedByBounds = YES; // height is not flexible
 	DTCoreTextLayoutFrame * layoutFrame = [super layoutFrame];
     layoutFrame.numberOfLines = self.numberOfLines;
     layoutFrame.lineBreakMode = self.lineBreakMode;
