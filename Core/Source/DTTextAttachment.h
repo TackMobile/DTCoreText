@@ -1,6 +1,6 @@
 //
 //  DTTextAttachment.h
-//  CoreTextExtensions
+//  DTCoreText
 //
 //  Created by Oliver on 14.01.11.
 //  Copyright 2011 Drobnik.com. All rights reserved.
@@ -108,6 +108,7 @@ typedef enum
 @property (nonatomic, assign) CGSize maximumSize;
 
 /**
+
  The contents of the receiver
  */
 @property (nonatomic, strong) id contents;

@@ -1,6 +1,6 @@
 //
 //  DTAttributedTextView.m
-//  CoreTextExtensions
+//  DTCoreText
 //
 //  Created by Oliver Drobnik on 1/12/11.
 //  Copyright 2011 Drobnik.com. All rights reserved.
@@ -351,7 +351,7 @@
 		}
 		//Add the container element after so all links are tappable.
 		[accessibleElements addObject:containerElement];
-	}	
+	}
 	
 	return accessibleElements;
 }

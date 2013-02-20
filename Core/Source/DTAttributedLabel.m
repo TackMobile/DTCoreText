@@ -11,10 +11,6 @@
 
 @implementation DTAttributedLabel
 
-@synthesize numberOfLines = _numberOfLines;
-@synthesize lineBreakMode = _lineBreakMode;
-@synthesize truncationString = _truncationString;
-
 - (DTCoreTextLayoutFrame *)layoutFrame
 {
     self.layoutFrameHeightIsConstrainedByBounds = YES; // height is not flexible
@@ -41,28 +37,29 @@
 
 #pragma mark - Properties 
 
-- (void)setNumberOfLines:(int)numLines
+- (void)setNumberOfLines:(NSInteger)numberOfLines
 {
-    if (numLines != _numberOfLines)
+    if (numberOfLines != _numberOfLines)
     {
-        _numberOfLines = numLines;
+        _numberOfLines = numberOfLines;
         [self relayoutText];
     }
 }
 
-- (void)setLineBreakMode:(NSLineBreakMode)mode
+- (void)setLineBreakMode:(NSLineBreakMode)lineBreakMode
 {
-    if (mode != _lineBreakMode)
+    if (lineBreakMode != _lineBreakMode)
     {
-        _lineBreakMode = mode;
+        _lineBreakMode = lineBreakMode;
         [self relayoutText];
     }
 }
-- (void)setTruncationString:(NSAttributedString *)str
+
+- (void)setTruncationString:(NSAttributedString *)trunctionString
 {
-    if (str != _truncationString)
+    if (trunctionString != _truncationString)
     {
-        _truncationString = str;
+        _truncationString = trunctionString;
         [self relayoutText];
     }
 }
