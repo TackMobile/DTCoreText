@@ -10,7 +10,7 @@
 #import "DTCoreText.h"
 #import "DTUtils.h"
 
-#import "NSData+Base64.h"
+#import "DTBase64Coding.h"
 
 static NSCache *imageCache = nil;
 
@@ -33,7 +33,9 @@ static NSCache *imageCache = nil;
     DTTextAttachmentType _contentType;
 	
 	NSURL *_contentURL;
+	
 	NSURL *_hyperLinkURL;
+	NSString *_hyperLinkGUID;
 	
 	CGFloat _fontLeading;
 	CGFloat _fontAscent;
@@ -112,7 +114,7 @@ static NSCache *imageCache = nil;
 			if (range.length)
 			{
 				NSString *encodedData = [src substringFromIndex:range.location + range.length];
-				NSData *decodedData = [NSData dataFromBase64String:encodedData];
+				NSData *decodedData = [DTBase64Coding dataByDecodingString:encodedData];
 				
 				decodedImage = [[DTImage alloc] initWithData:decodedData];
 				
@@ -247,7 +249,7 @@ static NSCache *imageCache = nil;
 	
 	DTImage *image = (DTImage *)_contents;
 	NSData *data = [image dataForPNGRepresentation];
-	NSString *encoded = [data base64EncodedString];
+	NSString *encoded = [DTBase64Coding stringByEncodingData:data];
 	
 	return [@"data:image/png;base64," stringByAppendingString:encoded];
 }
@@ -372,6 +374,7 @@ static NSCache *imageCache = nil;
 @synthesize hyperLinkURL = _hyperLinkURL;
 @synthesize attributes = _attributes;
 @synthesize verticalAlignment = _verticalAlignment;
-@synthesize hyperLinkGUID;
+@synthesize hyperLinkGUID = hyperLinkGUID;
+@synthesize childNodes = _childNodes;
 
 @end

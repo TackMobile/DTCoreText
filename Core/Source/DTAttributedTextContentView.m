@@ -30,7 +30,6 @@ NSString * const DTAttributedTextContentViewDidFinishLayoutNotification = @"DTAt
 	BOOL _layoutFrameHeightIsConstrainedByBounds;
 	
 	DTCoreTextLayouter *_layouter;
-	dispatch_queue_t _layoutQueue;
 	
 	CGPoint _layoutOffset;
     CGSize _backgroundOffset;
@@ -118,8 +117,6 @@ static Class _layerClassToUseForDTAttributedTextContentView = nil;
 		
 		_isTiling = YES;
 	}
-	
-	[self layoutQueue];
 }
 
 - (id)initWithFrame:(CGRect)frame
@@ -139,10 +136,6 @@ static Class _layerClassToUseForDTAttributedTextContentView = nil;
 - (void)dealloc
 {
 	[self removeAllCustomViews];
-	
-#if !OS_OBJECT_USE_OBJC
-	dispatch_release(_layoutQueue);
-#endif
 }
 
 - (NSString *)debugDescription
@@ -345,7 +338,14 @@ static Class _layerClassToUseForDTAttributedTextContentView = nil;
 						UIView *newCustomLinkView = nil;
 						NSAttributedString *linkString = [layoutString attributedSubstringFromRange:runRange];
 						
-						if (_delegateFlags.delegateSupportsCustomViewsForLinks)
+						// make sure that the frame height is no less than the line height for hyperlinks
+						if (frameForSubview.size.height < oneLine.frame.size.height)
+						{
+							frameForSubview.origin.y = truncf(oneLine.frame.origin.y);
+							frameForSubview.size.height = ceilf(oneLine.frame.size.height);
+						}
+						
+						if (existingLinkView)
 						{
 							NSDictionary *attributes = [layoutString attributesAtIndex:runRange.location effectiveRange:NULL];
 							
@@ -407,17 +407,15 @@ static Class _layerClassToUseForDTAttributedTextContentView = nil;
 		CGContextConcatCTM(ctx, transform);
 	}
 	
-	DTCoreTextLayoutFrame *theLayoutFrame = self.layoutFrame;
+	DTCoreTextLayoutFrame *theLayoutFrame = self.layoutFrame; // this is synchronized
 	
 	// need to prevent updating of string and drawing at the same time
-	dispatch_sync(self.layoutQueue, ^{
-		[theLayoutFrame drawInContext:ctx drawImages:_shouldDrawImages drawLinks:_shouldDrawLinks];
-		
-		if (_delegateFlags.delegateSupportsNotificationAfterDrawing)
-		{
-			[_delegate attributedTextContentView:self didDrawLayoutFrame:theLayoutFrame inContext:ctx];
-		}
-	});
+	[theLayoutFrame drawInContext:ctx drawImages:_shouldDrawImages drawLinks:_shouldDrawLinks];
+	
+	if (_delegateFlags.delegateSupportsNotificationAfterDrawing)
+	{
+		[_delegate attributedTextContentView:self didDrawLayoutFrame:theLayoutFrame inContext:ctx];
+	}
 }
 
 - (void)drawRect:(CGRect)rect
@@ -681,7 +679,8 @@ static Class _layerClassToUseForDTAttributedTextContentView = nil;
 
 - (DTCoreTextLayouter *)layouter
 {
-	dispatch_sync(self.layoutQueue, ^{
+	@synchronized(self)
+	{
 		if (!_layouter)
 		{
 			if (_attributedString)
@@ -692,26 +691,28 @@ static Class _layerClassToUseForDTAttributedTextContentView = nil;
 				_layouter.shouldCacheLayoutFrames = YES;
 			}
 		}
-	});
-	
-	return _layouter;
+		
+		return _layouter;
+	}
 }
 
 - (void)setLayouter:(DTCoreTextLayouter *)layouter
 {
-	dispatch_sync(self.layoutQueue, ^{
+	@synchronized(self)
+	{
 		if (_layouter != layouter)
 		{
 			_layouter = layouter;
 		}
-	});
+	}
 }
 
 - (DTCoreTextLayoutFrame *)layoutFrame
 {
-	DTCoreTextLayouter *theLayouter = self.layouter;
+	@synchronized(self)
+	{
+		DTCoreTextLayouter *theLayouter = self.layouter;
 	
-	dispatch_sync(self.layoutQueue, ^{
 		if (!_layoutFrame)
 		{
 			// we can only layout if we have our own layouter
@@ -722,7 +723,7 @@ static Class _layerClassToUseForDTAttributedTextContentView = nil;
 				if (rect.size.width<=0)
 				{
 					// cannot create layout frame with negative or zero width
-					return;
+					return nil;
 				}
 				
 				if (_layoutFrameHeightIsConstrainedByBounds)
@@ -730,7 +731,7 @@ static Class _layerClassToUseForDTAttributedTextContentView = nil;
 					if (rect.size.height<=0)
 					{
 						// cannot create layout frame with negative or zero height if flexible height is disabled
-						return;
+						return nil;
 					}
 					
 					// height already set
@@ -748,9 +749,7 @@ static Class _layerClassToUseForDTAttributedTextContentView = nil;
 				CGRect optimalFrame = CGRectMake(self.frame.origin.x, self.frame.origin.y, neededSize.width, neededSize.height);
 				NSDictionary *userInfo = [NSDictionary dictionaryWithObject:[NSValue valueWithCGRect:optimalFrame] forKey:@"OptimalFrame"];
 				
-				dispatch_async(dispatch_get_main_queue(), ^{
-					[[NSNotificationCenter defaultCenter] postNotificationName:DTAttributedTextContentViewDidFinishLayoutNotification object:self userInfo:userInfo];
-				});
+				[[NSNotificationCenter defaultCenter] postNotificationName:DTAttributedTextContentViewDidFinishLayoutNotification object:self userInfo:userInfo];
 				
 				if (_delegateFlags.delegateSupportsNotificationBeforeTextBoxDrawing)
 				{
@@ -768,28 +767,27 @@ static Class _layerClassToUseForDTAttributedTextContentView = nil;
 				}
 			}
 		}
-	});
 	
-	return _layoutFrame;
+		return _layoutFrame;
+	}
 }
 
 - (void)setLayoutFrame:(DTCoreTextLayoutFrame *)layoutFrame
 {
-	dispatch_sync(self.layoutQueue, ^{
+	@synchronized(self)
+	{
 		if (_layoutFrame != layoutFrame)
 		{
 			[self removeAllCustomViewsForLinks];
 			
 			if (layoutFrame)
 			{
-				dispatch_async(dispatch_get_main_queue(), ^{
-					[self setNeedsLayout];
-					[self setNeedsDisplayInRect:self.bounds];
-				});
+				[self setNeedsLayout];
+				[self setNeedsDisplayInRect:self.bounds];
 			}
 			_layoutFrame = layoutFrame;
 		}
-	});
+	};
 }
 
 - (NSMutableSet *)customViews
@@ -849,16 +847,6 @@ static Class _layerClassToUseForDTAttributedTextContentView = nil;
 	}
 }
 
-- (dispatch_queue_t)layoutQueue
-{
-	if (!_layoutQueue)
-	{
-		_layoutQueue = dispatch_queue_create("DTAttributedTextContentView Layout Queue", 0);
-	}
-	
-	return _layoutQueue;
-}
-
 - (NSString*)accessibilityLabel{
 	return self.attributedString.string;
 }
@@ -877,7 +865,6 @@ static Class _layerClassToUseForDTAttributedTextContentView = nil;
 @synthesize customViews;
 @synthesize customViewsForLinksIndex;
 @synthesize customViewsForAttachmentsIndex;
-@synthesize layoutQueue = _layoutQueue;
 @synthesize relayoutMask = _relayoutMask;
 
 @end
