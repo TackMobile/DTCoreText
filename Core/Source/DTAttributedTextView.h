@@ -19,6 +19,8 @@
 @interface DTAttributedTextView : UIScrollView
 {
 	NSMutableArray *accessibleElements;
+	// ivars needed by subclasses
+	DTAttributedTextContentView *_attributedTextContentView;
 }
 
 /**
