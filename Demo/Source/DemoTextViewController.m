@@ -21,6 +21,7 @@
 - (void)debugButton:(UIBarButtonItem *)sender;
 
 @property (nonatomic, strong) NSMutableSet *mediaPlayers;
+@property (nonatomic, strong) NSArray *contentViews;
 
 @end
 
@@ -109,7 +110,6 @@
 	[self.view addSubview:_htmlView];
 
 	// Create text view
-	[DTAttributedTextContentView setLayerClass:[DTTiledLayerWithoutFade class]];
 	_textView = [[DTAttributedTextView alloc] initWithFrame:frame];
 	
 	// we draw images and links via subviews provided by delegate methods
@@ -131,6 +131,8 @@
 	_iOS6View.contentInset = UIEdgeInsetsMake(10, 0, 10, 0);
 	_iOS6View.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
 	[self.view addSubview:_iOS6View];
+	
+	self.contentViews = @[_charsView, _rangeView, _htmlView, _textView, _iOS6View];
 }
 
 
@@ -146,20 +148,30 @@
 	
 	// example for setting a willFlushCallback, that gets called before elements are written to the generated attributed string
 	void (^callBackBlock)(DTHTMLElement *element) = ^(DTHTMLElement *element) {
-		// if an element is larger than twice the font size put it in it's own block
-		if (element.displayStyle == DTHTMLElementDisplayStyleInline && element.textAttachment.displaySize.height > 2.0 * element.fontDescriptor.pointSize)
+		
+		// the block is being called for an entire paragraph, so we check the individual elements
+		
+		for (DTHTMLElement *oneChildElement in element.childNodes)
 		{
-			element.displayStyle = DTHTMLElementDisplayStyleBlock;
+			// if an element is larger than twice the font size put it in it's own block
+			if (oneChildElement.displayStyle == DTHTMLElementDisplayStyleInline && oneChildElement.textAttachment.displaySize.height > 2.0 * oneChildElement.fontDescriptor.pointSize)
+			{
+				oneChildElement.displayStyle = DTHTMLElementDisplayStyleBlock;
+				oneChildElement.paragraphStyle.minimumLineHeight = element.textAttachment.displaySize.height;
+				oneChildElement.paragraphStyle.maximumLineHeight = element.textAttachment.displaySize.height;
+			}
 		}
 	};
 	
 	NSMutableDictionary *options = [NSMutableDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithFloat:1.0], NSTextSizeMultiplierDocumentOption, [NSValue valueWithCGSize:maxImageSize], DTMaxImageSize,
-							 @"Times New Roman", DTDefaultFontFamily,  @"purple", DTDefaultLinkColor, callBackBlock, DTWillFlushBlockCallBack, nil];
+							 @"Times New Roman", DTDefaultFontFamily,  @"purple", DTDefaultLinkColor, @"red", DTDefaultLinkHighlightColor, callBackBlock, DTWillFlushBlockCallBack, nil];
 	
 	if (useiOS6Attributes)
 	{
 		[options setObject:[NSNumber numberWithBool:YES] forKey:DTUseiOS6Attributes];
 	}
+	
+	[options setObject:[NSURL fileURLWithPath:readmePath] forKey:NSBaseURLDocumentOption];
 	
 	NSAttributedString *string = [[NSAttributedString alloc] initWithHTMLData:data options:options documentAttributes:NULL];
 	
@@ -174,7 +186,7 @@
 	_textView.frame = bounds;
 
 	// Display string
-	//_textView.shouldDrawLinks = NO; // we draw them in DTLinkButton
+	_textView.shouldDrawLinks = NO; // we draw them in DTLinkButton
 	_textView.attributedString = [self _attributedStringForSnippetUsingiOS6Attributes:NO];
 	
 	[self _segmentedControlChanged:nil];
@@ -267,18 +279,26 @@
 - (void)_segmentedControlChanged:(id)sender {
 	UIScrollView *selectedView = _textView;
 	
-	switch (_segmentedControl.selectedSegmentIndex) {
+	switch (_segmentedControl.selectedSegmentIndex)
+	{
 		case 1:
+		{
 			selectedView = _rangeView;
 			break;
+		}
+			
 		case 2:
+		{
 			selectedView = _charsView;
 			break;
+		}
+			
 		case 3:
 		{
 			selectedView = _htmlView;
 			break;
 		}
+			
 		case 4:
 		{
 			selectedView = _iOS6View;
@@ -288,6 +308,11 @@
 
 	// refresh only this tab
 	[self updateDetailViewForIndex:_segmentedControl.selectedSegmentIndex];
+	
+	// Hide all views except for the selected view to not conflict with VoiceOver
+	for (UIView *view in self.contentViews)
+		view.hidden = YES;
+	selectedView.hidden = NO;
 	
 	[self.view bringSubviewToFront:selectedView];
 	[selectedView flashScrollIndicators];
@@ -309,20 +334,13 @@
 	button.minimumHitSize = CGSizeMake(25, 25); // adjusts it's bounds so that button is always large enough
 	button.GUID = identifier;
 	
-	// we draw the contents ourselves
-	button.attributedString = string;
+	// get image with normal link text
+	UIImage *normalImage = [attributedTextContentView contentImageWithBounds:frame options:DTCoreTextLayoutFrameDrawingDefault];
+	[button setImage:normalImage forState:UIControlStateNormal];
 	
-	// make a version with different text color
-	NSMutableAttributedString *highlightedString = [string mutableCopy];
-	
-	NSRange range = NSMakeRange(0, highlightedString.length);
-	
-	NSDictionary *highlightedAttributes = [NSDictionary dictionaryWithObject:(__bridge id)[UIColor redColor].CGColor forKey:(id)kCTForegroundColorAttributeName];
-	
-	
-	[highlightedString addAttributes:highlightedAttributes range:range];
-	
-	button.highlightedAttributedString = highlightedString;
+	// get image for highlighted link text
+	UIImage *highlightImage = [attributedTextContentView contentImageWithBounds:frame options:DTCoreTextLayoutFrameDrawingDrawLinksHighlighted];
+	[button setImage:highlightImage forState:UIControlStateHighlighted];
 	
 	// use normal push action for opening URL
 	[button addTarget:self action:@selector(linkPushed:) forControlEvents:UIControlEventTouchUpInside];
@@ -336,7 +354,7 @@
 
 - (UIView *)attributedTextContentView:(DTAttributedTextContentView *)attributedTextContentView viewForAttachment:(DTTextAttachment *)attachment frame:(CGRect)frame
 {
-	if (attachment.contentType == DTTextAttachmentTypeVideoURL)
+	if ([attachment isKindOfClass:[DTVideoTextAttachment class]])
 	{
 		NSURL *url = (id)attachment.contentURL;
 		
@@ -409,15 +427,14 @@
 		
 		return grayView;
 	}
-	else if (attachment.contentType == DTTextAttachmentTypeImage)
+	else if ([attachment isKindOfClass:[DTImageTextAttachment class]])
 	{
 		// if the attachment has a hyperlinkURL then this is currently ignored
 		DTLazyImageView *imageView = [[DTLazyImageView alloc] initWithFrame:frame];
 		imageView.delegate = self;
-		if (attachment.contents)
-		{
-			imageView.image = attachment.contents;
-		}
+		
+		// sets the image if there is one
+		imageView.image = [(DTImageTextAttachment *)attachment image];
 		
 		// url for deferred loading
 		imageView.url = attachment.contentURL;
@@ -428,29 +445,44 @@
 			// NOTE: this is a hack, you probably want to use your own image view and touch handling
 			// also, this treats an image with a hyperlink by itself because we don't have the GUID of the link parts
 			imageView.userInteractionEnabled = YES;
-			DTLinkButton *button = (DTLinkButton *)[self attributedTextContentView:attributedTextContentView viewForLink:attachment.hyperLinkURL identifier:attachment.hyperLinkGUID frame:imageView.bounds];
+			
+			DTLinkButton *button = [[DTLinkButton alloc] initWithFrame:imageView.bounds];
+			button.URL = attachment.hyperLinkURL;
+			button.minimumHitSize = CGSizeMake(25, 25); // adjusts it's bounds so that button is always large enough
+			button.GUID = attachment.hyperLinkGUID;
+			
+			// use normal push action for opening URL
+			[button addTarget:self action:@selector(linkPushed:) forControlEvents:UIControlEventTouchUpInside];
+			
+			// demonstrate combination with long press
+			UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(linkLongPressed:)];
+			[button addGestureRecognizer:longPress];
+			
 			[imageView addSubview:button];
 		}
 		
 		return imageView;
 	}
-	else if (attachment.contentType == DTTextAttachmentTypeIframe)
+	else if ([attachment isKindOfClass:[DTIframeTextAttachment class]])
 	{
-		frame.origin.x += 50;
 		DTWebVideoView *videoView = [[DTWebVideoView alloc] initWithFrame:frame];
 		videoView.attachment = attachment;
 		
 		return videoView;
 	}
-	else if (attachment.contentType == DTTextAttachmentTypeObject)
+	else if ([attachment isKindOfClass:[DTObjectTextAttachment class]])
 	{
 		// somecolorparameter has a HTML color
-		UIColor *someColor = [UIColor colorWithHTMLName:[attachment.attributes objectForKey:@"somecolorparameter"]];
+		NSString *colorName = [attachment.attributes objectForKey:@"somecolorparameter"];
+		UIColor *someColor = [UIColor colorWithHTMLName:colorName];
 		
 		UIView *someView = [[UIView alloc] initWithFrame:frame];
 		someView.backgroundColor = someColor;
 		someView.layer.borderWidth = 1;
 		someView.layer.borderColor = [UIColor blackColor].CGColor;
+		
+		someView.accessibilityLabel = colorName;
+		someView.isAccessibilityElement = YES;
 		
 		return someView;
 	}
@@ -543,22 +575,25 @@
 	
 	NSPredicate *pred = [NSPredicate predicateWithFormat:@"contentURL == %@", url];
 	
+	BOOL didUpdate = NO;
+	
 	// update all attachments that matchin this URL (possibly multiple images with same size)
 	for (DTTextAttachment *oneAttachment in [_textView.attributedTextContentView.layoutFrame textAttachmentsWithPredicate:pred])
 	{
-		oneAttachment.originalSize = imageSize;
-		
-		if (!CGSizeEqualToSize(imageSize, oneAttachment.displaySize))
+		// update attachments that have no original size, that also sets the display size
+		if (CGSizeEqualToSize(oneAttachment.originalSize, CGSizeZero))
 		{
-			oneAttachment.displaySize = imageSize;
+			oneAttachment.originalSize = imageSize;
+			
+			didUpdate = YES;
 		}
 	}
 	
-	// need to reset the layouter because otherwise we get the old framesetter or cached layout frames
-	_textView.attributedTextContentView.layouter=nil;
-	
-	// here we're layouting the entire string, might be more efficient to only relayout the paragraphs that contain these attachments
-	[_textView.attributedTextContentView relayoutText];
+	if (didUpdate)
+	{
+		// layout might have changed due to image sizes
+		[_textView relayoutText];
+	}
 }
 
 #pragma mark Properties

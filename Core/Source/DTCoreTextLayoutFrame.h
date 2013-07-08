@@ -13,6 +13,8 @@
 #import <ApplicationServices/ApplicationServices.h>
 #endif
 
+#import "DTCoreTextConstants.h"
+
 @class DTCoreTextLayoutLine;
 @class DTTextBlock;
 
@@ -21,6 +23,15 @@
 #define CGFLOAT_OPEN_HEIGHT 16777215.0f
 
 typedef void (^DTCoreTextLayoutFrameTextBlockHandler)(DTTextBlock *textBlock, CGRect frame, CGContextRef context, BOOL *shouldDrawDefaultBackground); 
+
+// the drawing options
+typedef enum
+{
+	DTCoreTextLayoutFrameDrawingDefault              = 1<<0,
+	DTCoreTextLayoutFrameDrawingOmitLinks            = 1<<1,
+	DTCoreTextLayoutFrameDrawingOmitAttachments      = 1<<2,
+	DTCoreTextLayoutFrameDrawingDrawLinksHighlighted = 1<<3
+} DTCoreTextLayoutFrameDrawingOptions;
 
 
 @class DTCoreTextLayouter;
@@ -98,19 +109,46 @@ typedef void (^DTCoreTextLayoutFrameTextBlockHandler)(DTTextBlock *textBlock, CG
 
 
 /**
+ Calculates the frame that is covered by the text content.
+ 
+ The result is calculated by enumerating over all lines and creating a union over all their frames. This is different than the frame property since this gets calculated.
+ @returns The area that is covered by the text content.
+ @note The width depends on how many glyphs Core Text was able to fit into a line. A line that gets broken might not have glyphs all the way to the margin. The y origin is always adjusted to be the same as frame since the first line might have some leading. The height is the minimum height that fits all layout lines.
+ */
+- (CGRect)intrinsicContentFrame;
+
+
+/**
  @name Drawing
  */
 
 
 /**
- Draws the entire layout frame into the given graphics context.
- 
+ Draws the receiver into the given graphics context.
+
+ @warning This method is deprecated, use -[DTCoreTextLayoutFrame drawInContext:options:] instead
  @param context A graphics context to draw into
  @param drawImages Whether images should be drawn together with the text. If you specify `NO` then space is left blank where images would go and you have to add your own views to display these images.
  @param drawLinks Whether hyperlinks should be drawn together with the text. If you specify `NO` then space is left blank where links would go and you have to add your own views to display these images.
  @param drawImages Whether hyperlinks should be drawn together with the text. If you specify `NO` then space is left blank where links would go and you have to add your own views to display these links.
  */
-- (void)drawInContext:(CGContextRef)context drawImages:(BOOL)drawImages drawLinks:(BOOL)drawLinks;
+- (void)drawInContext:(CGContextRef)context drawImages:(BOOL)drawImages drawLinks:(BOOL)drawLinks __attribute__((deprecated("use -[DTCoreTextLayoutFrame drawInContext:options:] instead")));
+
+
+/**
+ Draws the receiver into the given graphics context.
+ 
+ Possible options are the following, you may combine them with a binary OR.
+ 
+ - DTCoreTextLayoutFrameDrawingDefault or 0
+ - DTCoreTextLayoutFrameDrawingOmitLinks
+ - DTCoreTextLayoutFrameDrawingOmitAttachments
+ - DTCoreTextLayoutFrameDrawingDrawLinksHighlighted
+ 
+ @param context A graphics context to draw into
+ @param options The drawing options. Use DTCoreTextLayoutFrameDrawingDefault or 0 to draw everything
+ */
+- (void)drawInContext:(CGContextRef)context options:(DTCoreTextLayoutFrameDrawingOptions)options;
 
 
 /**
@@ -203,12 +241,27 @@ typedef void (^DTCoreTextLayoutFrameTextBlockHandler)(DTTextBlock *textBlock, CG
 /**
  Finds the appropriate baseline origin for a line to position it at the correct distance from a previous line.
  
+ Support Layout options are:
+ 
+ - DTCoreTextLayoutFrameLinePositioningAlgorithmWebKit,
+ - DTCoreTextLayoutFrameLinePositioningAlgorithmLegacy
+ 
+ @param line The line
+ @param previousLine The line after which to position the line.
+ @param options The layout options to employ for positioning lines
+ @returns The correct baseline origin for the line.
+ */
+- (CGPoint)baselineOriginToPositionLine:(DTCoreTextLayoutLine *)line afterLine:(DTCoreTextLayoutLine *)previousLine options:(DTCoreTextLayoutFrameLinePositioningOptions)options;
+
+/**
+ Finds the appropriate baseline origin for a line to position it at the correct distance from a previous line using the DTCoreTextLayoutFrameLinePositioningOptionAlgorithmLegacy algorithm.
+ 
+ @warning This method is deprecated, use -[baselineOriginToPositionLine:afterLine:algorithm:] instead
  @param line The line
  @param previousLine The line after which to position the line.
  @returns The correct baseline origin for the line.
  */
-- (CGPoint)baselineOriginToPositionLine:(DTCoreTextLayoutLine *)line afterLine:(DTCoreTextLayoutLine *)previousLine;
-
+- (CGPoint)baselineOriginToPositionLine:(DTCoreTextLayoutLine *)line afterLine:(DTCoreTextLayoutLine *)previousLine __attribute__((deprecated("use use -[baselineOriginToPositionLine:afterLine:algorithm:] instead")));;
 
 /**
  @name Text Attachments
@@ -309,10 +362,5 @@ typedef void (^DTCoreTextLayoutFrameTextBlockHandler)(DTTextBlock *textBlock, CG
  */
 @property(nonatomic, strong)NSAttributedString *truncationString;
 
-
-/**
- Flag to supress leading whitespace above fist line
- */
-@property(nonatomic, assign)BOOL noLeadingOnFirstLine;
 
 @end

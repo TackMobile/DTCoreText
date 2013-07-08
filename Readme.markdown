@@ -21,6 +21,11 @@ Follow [@cocoanetics](http://twitter.com/cocoanetics) on Twitter or subscribe to
 
 #### Changelog
 
+- [Version 1.5.3](http://www.cocoanetics.com/2013/06/dtcoretext-1-5-3/)
+- [Version 1.5.2](http://www.cocoanetics.com/2013/05/dtcoretext-1-5-2/)
+- [Version 1.5](http://www.cocoanetics.com/2013/05/rich-text-update-1-5/)
+- [Version 1.4.x](http://www.cocoanetics.com/2013/04/dtcoretext-1-4-2/)
+- [Version 1.4](http://www.cocoanetics.com/2013/04/rich-text-update-1-4/)
 - [Version 1.2](http://www.cocoanetics.com/2013/01/dtcoretext-1-2-0/)
 - [Version 1.1](http://www.cocoanetics.com/2012/12/dtcoretext-1-1/)
 - [Version 1.0.1](http://www.cocoanetics.com/2012/04/dtcoretext-1-0-1-linker-flags-and-rich-text-news/)
@@ -31,6 +36,6 @@ License
 
 It is open source and covered by a standard 2-clause BSD license. That means you have to mention *Cocoanetics* as the original author of this code and reproduce the LICENSE text inside your app. 
 
-You can purchase a [Non-Attribution-License](http://www.cocoanetics.com/order/?product=DTCoreText%20Non-Attribution%20License) for 75 Euros for not having to include the LICENSE text.
+You can purchase a [Non-Attribution-License](https://www.cocoanetics.com/order/?product_id=DTCoreText) for 75 Euros for not having to include the LICENSE text.
 
 We also accept sponsorship for specific enhancements which you might need. Please [contact us via email](mailto:oliver@cocoanetics.com?subject=DTCoreText) for inquiries.

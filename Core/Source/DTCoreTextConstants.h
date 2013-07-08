@@ -43,12 +43,12 @@ extern NSString * const DTDefaultFontSize;
 extern NSString * const DTDefaultTextColor;
 extern NSString * const DTDefaultLinkColor;
 extern NSString * const DTDefaultLinkDecoration;
+extern NSString * const DTDefaultLinkHighlightColor;
 extern NSString * const DTDefaultTextAlignment;
 extern NSString * const DTDefaultLineHeightMultiplier;
 extern NSString * const DTDefaultLineHeightMultiplier;
 extern NSString * const DTDefaultFirstLineHeadIndent;
 extern NSString * const DTDefaultHeadIndent;
-extern NSString * const DTDefaultListIndent;
 extern NSString * const DTDefaultStyleSheet;
 extern NSString * const DTUseiOS6Attributes;
 extern NSString * const DTWillFlushBlockCallBack;
@@ -58,16 +58,21 @@ extern NSString * const DTWillFlushBlockCallBack;
 extern NSString * const DTTextListsAttribute;
 extern NSString * const DTAttachmentParagraphSpacingAttribute;
 extern NSString * const DTLinkAttribute;
+extern NSString * const DTLinkHighlightColorAttribute;
 extern NSString * const DTAnchorAttribute;
 extern NSString * const DTGUIDAttribute;
 extern NSString * const DTHeaderLevelAttribute;
-extern NSString * const DTPreserveNewlinesAttribute;
 extern NSString * const DTStrikeOutAttribute;
 extern NSString * const DTBackgroundColorAttribute;
 extern NSString * const DTShadowsAttribute;
 extern NSString * const DTHorizontalRuleStyleAttribute;
 extern NSString * const DTTextBlocksAttribute;
 extern NSString * const DTFieldAttribute;
+extern NSString * const DTCustomAttributesAttribute;
+
+// field constants
+
+extern NSString * const DTListPrefixField;
 
 // iOS 6 compatibility
 extern BOOL ___useiOS6Attributes;
@@ -101,3 +106,8 @@ typedef enum
 	DTHTMLElementFontVariantSmallCaps
 } DTHTMLElementFontVariant;
 
+typedef enum
+{
+	DTCoreTextLayoutFrameLinePositioningOptionAlgorithmWebKit = 1,
+	DTCoreTextLayoutFrameLinePositioningOptionAlgorithmLegacy = 2
+} DTCoreTextLayoutFrameLinePositioningOptions;

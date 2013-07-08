@@ -42,6 +42,26 @@
 	STAssertEqualObjects(empty2, @"", @"empty2 should match");
 }
 
+// the !important CSS tag should be ignored
+- (void)testImportant
+{
+	NSString *string = @"p {align: center !IMPORTANT;color:blue;}";
+	
+	DTCSSStylesheet *stylesheet = [[DTCSSStylesheet alloc] initWithStyleBlock:string];
+	
+	NSDictionary *styles = [stylesheet.styles objectForKey:@"p"];
+	
+	STAssertEquals([styles count], 2u, @"There should be 2 styles");
+	
+	NSString *alignStyle = [styles objectForKey:@"align"];
+	
+	STAssertEqualObjects(alignStyle, @"center", @"Align should be 'center', but is '%@'", alignStyle);
+	
+	NSString *colorStyle = [styles objectForKey:@"color"];
+	
+	STAssertEqualObjects(colorStyle, @"blue", @"Color should be 'blue', but is '%@'", colorStyle);
+}
+
 - (void)testMerging
 {
 	DTCSSStylesheet *stylesheet = [[DTCSSStylesheet defaultStyleSheet] copy];
@@ -52,7 +72,7 @@
 	element.fontDescriptor = [[DTCoreTextFontDescriptor alloc] init]; // need to have just any font descriptor
 	element.textScale = 1.0;
 	
-	NSDictionary *styles = [stylesheet mergedStyleDictionaryForElement:element];
+	NSDictionary *styles = [stylesheet mergedStyleDictionaryForElement:element matchedSelectors:NULL];
 	[element applyStyleDictionary:styles];
 	
 	STAssertEquals(element.displayStyle, DTHTMLElementDisplayStyleBlock, @"Style merging lost block display style");

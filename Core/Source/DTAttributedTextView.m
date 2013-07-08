@@ -9,6 +9,7 @@
 #import "DTAttributedTextView.h"
 #import "DTCoreText.h"
 #import <QuartzCore/QuartzCore.h>
+#import "DTTiledLayerWithoutFade.h"
 
 @interface DTAttributedTextView ()
 
@@ -23,7 +24,7 @@
 	UIView *_backgroundView;
 
 	// these are pass-through, i.e. store until the content view is created
-	__unsafe_unretained id textDelegate;
+	DT_WEAK_VARIABLE id textDelegate;
 	NSAttributedString *_attributedString;
 	
 	BOOL _shouldDrawLinks;
@@ -107,16 +108,39 @@
 	
 	if (range.length != NSNotFound)
 	{
-		// get the line of the first index of the anchor range
-		DTCoreTextLayoutLine *line = [self.attributedTextContentView.layoutFrame lineContainingIndex:range.location];
-		
-		// make sure we don't scroll too far
-		CGFloat maxScrollPos = self.contentSize.height - self.bounds.size.height + self.contentInset.bottom + self.contentInset.top;
-		CGFloat scrollPos = MIN(line.frame.origin.y, maxScrollPos);
-		
-		// scroll
-		[self setContentOffset:CGPointMake(0, scrollPos) animated:animated];
+		[self scrollRangeToVisible:range animated:animated];
 	}
+}
+
+- (void)scrollRangeToVisible:(NSRange)range animated:(BOOL)animated
+{
+	// get the line of the first index of the anchor range
+	DTCoreTextLayoutLine *line = [self.attributedTextContentView.layoutFrame lineContainingIndex:range.location];
+	
+	// make sure we don't scroll too far
+	CGFloat maxScrollPos = self.contentSize.height - self.bounds.size.height + self.contentInset.bottom + self.contentInset.top;
+	CGFloat scrollPos = MIN(line.frame.origin.y, maxScrollPos);
+	
+	// scroll
+	[self setContentOffset:CGPointMake(0, scrollPos) animated:animated];
+}
+
+- (void)relayoutText
+{
+	if (![NSThread isMainThread])
+	{
+		[self performSelectorOnMainThread:@selector(relayoutText) withObject:nil waitUntilDone:YES];
+		return;
+	}
+	
+	// need to reset the layouter because otherwise we get the old framesetter or cached layout frames
+	_attributedTextContentView.layouter=nil;
+	
+	// here we're layouting the entire string, might be more efficient to only relayout the paragraphs that contain these attachments
+	[_attributedTextContentView relayoutText];
+	
+	// layout custom subviews for visible area
+	[self setNeedsLayout];
 }
 
 #pragma mark Notifications
@@ -156,7 +180,28 @@
 			frame = CGRectZero;
 		}
 		
+		// make sure we always have a tiled layer
+		Class previousLayerClass = nil;
+		
+		// for DTAttributedTextContentView subclasses we force a tiled layer
+		if ([classToUse isSubclassOfClass:[DTAttributedTextContentView class]])
+		{
+			Class layerClass = [DTAttributedTextContentView layerClass];
+			
+			if (![layerClass isSubclassOfClass:[CATiledLayer class]])
+			{
+				[DTAttributedTextContentView setLayerClass:[DTTiledLayerWithoutFade class]];
+				previousLayerClass = layerClass;
+			}
+		}
+		
 		_attributedTextContentView = [[classToUse alloc] initWithFrame:frame];
+		
+		// restore previous layer class if we changed the layer class for the content view
+		if (previousLayerClass)
+		{
+			[DTAttributedTextContentView setLayerClass:previousLayerClass];
+		}
 		
 		_attributedTextContentView.userInteractionEnabled = YES;
 		_attributedTextContentView.backgroundColor = self.backgroundColor;

@@ -402,10 +402,19 @@ static NSDictionary *entityReverseLookup = nil;
 		{
 			if (oneChar<=255)
 			{
+				// output as is
 				[tmpString appendFormat:@"%C", oneChar];
+			}
+			else if (CFStringIsSurrogateHighCharacter(oneChar) && i < [self length]-1)
+			{
+				i++;
+				unichar surrogateLowChar = [self characterAtIndex:i];
+				UTF32Char u32code = CFStringGetLongCharacterForSurrogatePair(oneChar, surrogateLowChar);
+				[tmpString appendFormat:@"&#%lu;", (unsigned long)u32code];
 			}
 			else
 			{
+				// output encoded
 				[tmpString appendFormat:@"&#%d;", oneChar];
 			}
 		}

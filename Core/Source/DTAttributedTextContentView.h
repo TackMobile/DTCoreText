@@ -6,7 +6,8 @@
 //  Copyright 2011 Drobnik.com. All rights reserved.
 //
 
-#import <CoreText/CoreText.h>
+#import "DTCoreTextLayoutFrame.h"
+#import "DTWeakSupport.h"
 
 @class DTAttributedTextContentView;
 @class DTCoreTextLayoutFrame;
@@ -31,7 +32,17 @@ extern NSString * const DTAttributedTextContentViewDidFinishLayoutNotification;
  */
 
 /**
- Called after a layout frame or a part of it is drawn.
+ Called before a layout frame or a part of it is drawn. The text delegate can draw contents that goes under the text in this method.
+ 
+ @param attributedTextContentView The content view that will be drawing a layout frame
+ @param layoutFrame The layout frame that will be drawn for
+ @param context The graphics context that will drawn into
+ */
+- (void)attributedTextContentView:(DTAttributedTextContentView *)attributedTextContentView willDrawLayoutFrame:(DTCoreTextLayoutFrame *)layoutFrame inContext:(CGContextRef)context;
+
+
+/**
+ Called after a layout frame or a part of it is drawn. The text delegate can draw contents that goes over the text in this method.
  
  @param attributedTextContentView The content view that drew a layout frame
  @param layoutFrame The layout frame that was drawn for
@@ -115,6 +126,8 @@ typedef NSUInteger DTAttributedTextContentViewRelayoutMask;
  - set a layout frame
  
  The first you would normally use, the second you would use if you are layouting a larger text and then simply want to display individual parts (e.g. pages from an e-book) in a content view.
+ 
+ DTAttributedTextContentView is designed to be used as the content view inside a DTAttributedTextView and thus sizes its intrinsicContentSize always to be the same as the width of the set frame. Use DTAttributedLabel if you don't require scrolling behavior.
  */
 
 @interface DTAttributedTextContentView : UIView
@@ -127,6 +140,11 @@ typedef NSUInteger DTAttributedTextContentViewRelayoutMask;
 	NSMutableDictionary *customViewsForAttachmentsIndex;
 	
 	BOOL _flexibleHeight;
+	
+	// for layoutFrame
+	NSInteger _numberOfLines;
+	NSLineBreakMode _lineBreakMode;
+	NSAttributedString *_truncationString;
 }
 
 
@@ -226,8 +244,7 @@ typedef NSUInteger DTAttributedTextContentViewRelayoutMask;
  The delegate that is in charge of supplying custom behavior for the receiver. It must conform to <DTAttributedTextContentViewDelegate> and provide custom subviews, link buttons, etc.
  */
 
-@property (nonatomic, assign) IBOutlet id <DTAttributedTextContentViewDelegate> delegate;	// subtle simulator bug - use assign not __unsafe_unretained
-
+@property (nonatomic, DT_WEAK_PROPERTY) IBOutlet id <DTAttributedTextContentViewDelegate> delegate;
 
 /**
  @name Customizing Content Display
@@ -237,7 +254,6 @@ typedef NSUInteger DTAttributedTextContentViewRelayoutMask;
  The insets to apply around the text content
  */
 @property (nonatomic) UIEdgeInsets edgeInsets;
-
 
 /**
  Specifies if the receiver should draw image text attachments.
@@ -305,6 +321,23 @@ typedef NSUInteger DTAttributedTextContentViewRelayoutMask;
  @returns The `CALayer` subclass that new instances are using
  */
 + (Class)layerClass;
+
+@end
+
+
+/**
+ Methods for drawing the content view
+ */
+@interface DTAttributedTextContentView (Drawing)
+
+/**
+ Creates an image from a part of the receiver's content view
+ @param bounds The bounds of the content to draw
+ @param options The drawing options to apply when drawing
+ @see [DTCoreTextLayoutFrame drawInContext:options:] for a list of available drawing options
+ @returns A `UIImage` with the specified content
+ */
+- (UIImage *)contentImageWithBounds:(CGRect)bounds options:(DTCoreTextLayoutFrameDrawingOptions)options;
 
 @end
 
