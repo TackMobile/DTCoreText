@@ -50,13 +50,20 @@
 
 - (id)initWithLine:(CTLineRef)line
 {
+	return [self initWithLine:line stringLocationOffset:0];
+}
+
+- (id)initWithLine:(CTLineRef)line stringLocationOffset:(NSInteger)stringLocationOffset
+{
 	if ((self = [super init]))
 	{
 		_line = line;
 		CFRetain(_line);
-		
+				
 		// writing direction
 		_needsToDetectWritingDirection = YES;
+				
+		_stringLocationOffset = stringLocationOffset;
 	}
 	return self;
 }
@@ -526,5 +533,7 @@
 
 @synthesize baselineOrigin = _baselineOrigin;
 @synthesize writingDirectionIsRightToLeft = _writingDirectionIsRightToLeft;
+
+@synthesize stringLocationOffset = _stringLocationOffset;
 
 @end

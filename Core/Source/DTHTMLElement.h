@@ -73,6 +73,8 @@
 	
 	// indent of lists
 	CGFloat _listIndent;
+	
+	BOOL _shouldProcessCustomHTMLAttributes;
 }
 
 /**
@@ -207,6 +209,11 @@
 @property (nonatomic, assign) DTHTMLElementFontVariant fontVariant;
 
 /**
+ The current unscaled font size (used when inheriting font size). You're probably looking for fontDescriptor.pointSize.
+ */
+@property (nonatomic, assign) CGFloat currentTextSize;
+
+/**
  The scale by which all fonts are scaled
  */
 @property (nonatomic, assign) CGFloat textScale;
@@ -236,6 +243,11 @@
  */
 @property (nonatomic, assign) BOOL supressWhitespaceChildren;
 
+
+/**
+ Prevents adding custom HTML attributes to output
+ */
+@property (nonatomic, assign) BOOL shouldProcessCustomHTMLAttributes;
 
 /**
  @name Working with HTML Attributes
