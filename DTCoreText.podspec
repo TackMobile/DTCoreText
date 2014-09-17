@@ -14,13 +14,9 @@ Pod::Spec.new do |spec|
   spec.summary      = 'Methods to allow using HTML code with CoreText.'
   spec.author       = { 'Oliver Drobnik' => 'oliver@cocoanetics.com' }
   spec.prefix_header_contents = '#import <CoreText/CoreText.h>'
-
-  spec.pre_install do |pod_representation, library_representation|
-    Dir.chdir(pod_representation.root + 'Core/Source/') do
-      Dir.glob('*.css') do |css_file|
-        system '/usr/bin/xxd', '-i', css_file, css_file + '.c'
-      end
-    end
-  end
+  spec.prepare_command = <<-CMD
+     cd ./Core/Source
+     /usr/bin/xxd -i default.css default.css.c
+  CMD
 end
 
