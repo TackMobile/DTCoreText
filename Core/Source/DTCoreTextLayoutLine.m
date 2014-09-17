@@ -14,7 +14,7 @@
 #import "NSDictionary+DTCoreText.h"
 #import "DTTextBlock.h"
 #import "DTCoreTextConstants.h"
-#import <UIKit/UIKit.h>
+#import "DTCoreTextFunctions.h"
 
 @interface DTCoreTextLayoutLine ()
 
@@ -50,13 +50,20 @@
 
 - (id)initWithLine:(CTLineRef)line
 {
+	return [self initWithLine:line stringLocationOffset:0];
+}
+
+- (id)initWithLine:(CTLineRef)line stringLocationOffset:(NSInteger)stringLocationOffset
+{
 	if ((self = [super init]))
 	{
 		_line = line;
 		CFRetain(_line);
-		
+				
 		// writing direction
 		_needsToDetectWritingDirection = YES;
+				
+		_stringLocationOffset = stringLocationOffset;
 	}
 	return self;
 }
@@ -66,10 +73,15 @@
 	CFRelease(_line);
 }
 
+#ifndef COVERAGE
+// exclude method from coverage testing
+
 - (NSString *)description
 {
 	return [NSString stringWithFormat:@"<%@ origin=%@ frame=%@ range=%@", [self class], NSStringFromCGPoint(_baselineOrigin), NSStringFromCGRect(self.frame), NSStringFromRange([self stringRange])];
 }
+
+#endif
 
 - (NSRange)stringRange
 {
@@ -306,7 +318,7 @@
 			
 			if (usedFont)
 			{
-				maxOffset = MAX(maxOffset, fabsf(CTFontGetUnderlinePosition(usedFont)));
+				maxOffset = MAX(maxOffset, fabs(CTFontGetUnderlinePosition(usedFont)));
 				
 				maxFontSize = MAX(maxFontSize, CTFontGetSize(usedFont));
 			}
@@ -339,11 +351,32 @@
 				{
 					CTRunRef oneRun = CFArrayGetValueAtIndex(runs, i);
 					
+					CGPoint *positions = (CGPoint*)CTRunGetPositionsPtr(oneRun);
+					
+					BOOL shouldFreePositions = NO;
+					
+					if (positions == NULL) // Ptr gave NULL, we'll need to copy positions array and later free it
+					{
+						CFIndex glyphCount = CTRunGetGlyphCount(oneRun);
+						
+						shouldFreePositions = YES;
+						
+						size_t positionsBufferSize = sizeof(CGPoint) * glyphCount;
+						CGPoint *positionsBuffer = malloc(positionsBufferSize);
+						CTRunGetPositions(oneRun, CFRangeMake(0, 0), positionsBuffer);
+						positions = positionsBuffer;
+					}
+					
 					// assumption: position of first glyph is also the correct offset of the entire run
-					CGPoint position = *CTRunGetPositionsPtr(oneRun);
+					CGPoint position = positions[0];
 					
 					DTCoreTextGlyphRun *glyphRun = [[DTCoreTextGlyphRun alloc] initWithRun:oneRun layoutLine:self offset:position.x];
 					[tmpArray addObject:glyphRun];
+					
+					if ( shouldFreePositions )
+					{
+						free(positions);
+					}
 				}
 				
 				_glyphRuns = tmpArray;
@@ -526,5 +559,7 @@
 
 @synthesize baselineOrigin = _baselineOrigin;
 @synthesize writingDirectionIsRightToLeft = _writingDirectionIsRightToLeft;
+
+@synthesize stringLocationOffset = _stringLocationOffset;
 
 @end

@@ -33,6 +33,10 @@
 	DTColor *_textColor;
 	DTColor *_backgroundColor;
 	
+	DTColor *_backgroundStrokeColor;
+	CGFloat _backgroundStrokeWidth;
+	CGFloat _backgroundCornerRadius;
+	
 	CTUnderlineStyle _underlineStyle;
 	
 	NSString *_beforeContent;
@@ -45,8 +49,6 @@
 	NSInteger _headerLevel;
 	
 	NSArray *_shadows;
-	
-	NSMutableDictionary *_fontCache;
 	
 	DTHTMLElementDisplayStyle _displayStyle;
 	DTHTMLElementFloatStyle _floatStyle;
@@ -73,6 +75,8 @@
 	
 	// indent of lists
 	CGFloat _listIndent;
+	
+	BOOL _shouldProcessCustomHTMLAttributes;
 }
 
 /**
@@ -151,6 +155,26 @@
 @property (nonatomic, strong) DTColor *backgroundColor;
 
 /**
+ Background stroke color in the receiver
+ */
+@property (nonatomic, strong) DTColor *backgroundStrokeColor;
+
+/**
+ Background stroke width in the receiver
+ */
+@property (nonatomic, assign) CGFloat backgroundStrokeWidth;
+
+/**
+ Background stroke width in the receiver
+ */
+@property (nonatomic, assign) CGFloat backgroundCornerRadius;
+
+/**
+ The custom letter spacing of the receiver, default is 0px
+ */
+@property (nonatomic, assign) CGFloat letterSpacing;
+
+/**
  Additional text to be inserted before the text content of the receiver
  */
 @property (nonatomic, copy) NSString *beforeContent;
@@ -207,6 +231,11 @@
 @property (nonatomic, assign) DTHTMLElementFontVariant fontVariant;
 
 /**
+ The current unscaled font size (used when inheriting font size). You're probably looking for fontDescriptor.pointSize.
+ */
+@property (nonatomic, assign) CGFloat currentTextSize;
+
+/**
  The scale by which all fonts are scaled
  */
 @property (nonatomic, assign) CGFloat textScale;
@@ -230,12 +259,10 @@
  */
 @property (nonatomic, assign) BOOL containsAppleConvertedSpace;
 
-
 /**
- Ignores children for output that consist only of whitespace
+ Prevents adding custom HTML attributes to output
  */
-@property (nonatomic, assign) BOOL supressWhitespaceChildren;
-
+@property (nonatomic, assign) BOOL shouldProcessCustomHTMLAttributes;
 
 /**
  @name Working with HTML Attributes
